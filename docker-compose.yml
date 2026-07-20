@@ -1,0 +1,34 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: cardscout
+      POSTGRES_PASSWORD: cardscout
+      POSTGRES_DB: cardscout
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cardscout"]
+      interval: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    env_file: [.env]
+    environment:
+      DATABASE_URL: postgresql+psycopg2://cardscout:cardscout@db:5432/cardscout
+    ports: ["8000:8000"]
+    volumes: ["./backend:/app", "./data:/data"]
+    depends_on:
+      db: {condition: service_healthy}
+
+  frontend:
+    build: ./frontend
+    ports: ["3000:3000"]
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    volumes: ["./frontend:/app", "/app/node_modules"]
+    depends_on: [backend]
+
+volumes:
+  pgdata:

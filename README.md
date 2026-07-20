@@ -1,30 +1,74 @@
-# HomeGround
+# CardScout
 
-A daily sports geography game: 5 questions a day, tap the world map where the moment in sports history happened, and score up to 1,000 points per question based on distance (full points inside 25 km, decaying from there). Inspired by [GeoHistory](https://geohistory.gg/).
+AI-powered sports card deal finder. CardScout monitors newly listed eBay cards, identifies the
+exact card from the listing image *and* text, estimates market value from recent comparable
+sales, and alerts you when a listing looks significantly underpriced.
 
-## Features
+**CardScout never buys anything.** It surfaces opportunities; you review and purchase manually
+through eBay.
 
-- **Daily round** — the same 5 questions for everyone each day, drawn deterministically from the question bank by date.
-- **Chalkboard map** — a hand-drawn-feel SVG world map with tap-to-guess, drag to pan, and zoom.
-- **Leaderboard** — post your score under a name after full time.
-- **Admin page** — passcode-gated (default `coach123`, changeable in the app). Add, edit, and delete questions; set each answer's location by tapping the map.
-- Ships with 20 classic moments: the Rumble in the Jungle, the Maracanazo, the Miracle on Ice, Senna at Imola, and more.
+## Scope (v1)
 
-## Run locally
+eBay only · sports trading cards only · baseball and basketball · PSA-graded only ·
+Buy It Now only · newly listed only · United States marketplace.
+
+## Why image analysis matters
+
+Sellers mislist cards constantly — a missing card number, a misspelled player, the wrong year,
+or a valuable parallel never mentioned in the title. CardScout reads the card and the PSA label
+from the listing photos and compares that against what the seller claimed. The gap between the
+two is often where the profit is.
+
+## Quick start (mock mode, no credentials needed)
 
 ```bash
-npm install
-npm run dev
+cp .env.example .env
+docker compose up --build
 ```
 
-## Deploy
+- API: http://localhost:8000 (docs at `/docs`)
+- Frontend: http://localhost:3000
 
-Pushing to `main` auto-deploys to GitHub Pages via the included workflow.
-One-time setup: in the repo go to **Settings → Pages → Source → GitHub Actions**.
+Mock mode is the default, so the full pipeline runs against realistic generated listings
+before any eBay credentials exist.
 
-## Storage note
+### Backend without Docker
 
-`src/storage.js` backs the game with `localStorage`, so scores, questions, and the
-leaderboard are **per-browser**. For a real shared leaderboard, replace that shim
-with calls to a small backend (any key-value store works — the API surface is just
-`get/set/delete/list`).
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+pytest            # run the test suite
+```
+
+## Configuration
+
+All settings live in `.env` (see `.env.example`). Key thresholds:
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `MIN_IDENTIFICATION_CONFIDENCE` | 0.90 | Skip listings the AI isn't sure it identified |
+| `MIN_VALUATION_CONFIDENCE` | 0.80 | Skip listings without solid comparable sales |
+| `MIN_NET_PROFIT` | 50 | Dollars of expected profit required to alert |
+| `MIN_ROI` | 0.20 | Return on total purchase cost required to alert |
+| `RESALE_FEE_PCT` | 0.1325 | Assumed marketplace fees on resale |
+| `TAX_PCT` | 0.07 | Assumed sales tax on purchase |
+
+## Build status
+
+- [x] **Phase 1** — project setup, config, structured logging, health/config API, Docker, mock mode
+- [ ] Phase 2 — database schema and migrations
+- [ ] Phase 3 — mock listing pipeline
+- [ ] Phase 4 — card identification (image + text)
+- [ ] Phase 5 — comparable-sales engine
+- [ ] Phase 6 — profitability calculation
+- [ ] Phase 7 — opportunity scoring
+- [ ] Phase 8 — dashboard
+- [ ] Phase 9 — Discord alerts
+- [ ] Phase 10 — live eBay Browse API
+
+## Notes and limitations
+
+- Valuations are estimates from historical comps, not guarantees. Card markets move.
+- CardScout uses the official eBay Browse API and does not scrape eBay web pages.
+- Grading, authenticity, and condition risk remain yours to assess before buying.

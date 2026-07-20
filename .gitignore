@@ -1,4 +1,10 @@
-node_modules
-dist
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+*.db
+node_modules/
+.next/
+dist/
 .DS_Store
-*.local
